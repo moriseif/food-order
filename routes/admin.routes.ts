@@ -1,9 +1,14 @@
 import express, { Request, Response, NextFunction } from "express";
-import { CreateVendor } from "../controllers";
+import { CreateVandor, GetVandorById, GetVandors } from "../controllers";
 
 const router = express.Router();
 
-router.post("/vendor", CreateVendor);
+router.post("/vandor", CreateVandor);
+
+router.get("/vandors", GetVandors);
+
+router.get("/vandor/:id", GetVandorById);
+
 router.get("/", (req: Request, res: Response, next: NextFunction) => {
   res.json({ message: "hello from admin panel" });
 });
