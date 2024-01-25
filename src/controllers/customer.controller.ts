@@ -4,6 +4,7 @@ import {
   CreateCustomerInputs,
   CustomerLoginInputs,
   EditCustomerInputs,
+  OrderInputs,
 } from "../dto/Customer.dto";
 import { validate } from "class-validator";
 import {
@@ -15,6 +16,8 @@ import {
   onRequestOTP,
 } from "../utility";
 import { Customer } from "../models/Customer";
+import { Food } from "../models/Food";
+import { Order } from "../models/Order";
 
 export const CustomerSignUp = async (
   req: Request,
@@ -58,6 +61,7 @@ export const CustomerSignUp = async (
     verified: false,
     lat: 0,
     lng: 0,
+    orders: [],
   });
 
   if (result) {
@@ -221,5 +225,84 @@ export const UpdateCustomerProfile = async (
       const result = await profile.save();
       return res.status(200).json(result);
     }
+  }
+};
+
+export const CreateOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // grab current login customer
+  const customer = req.user;
+  if (customer) {
+    // create an order
+    const orderId = `${Math.floor(Math.random() * 89999) + 1000}`;
+    const profile = await Customer.findById(customer._id);
+    // grab order items from the request [{id:xx,unit:yy}]
+    const cart = <[OrderInputs]>req.body; //  [{id:xx,unit:yy}]
+    let cartItems = Array();
+    let netAmount = 0.0;
+    // calculate order amount
+    const foods = await Food.find()
+      .where("_id")
+      .in(cart.map((item) => item._id))
+      .exec();
+
+    foods.map((food) => {
+      cart.map(({ _id, unit }) => {
+        if (food._id === _id) {
+          netAmount += food.price * unit;
+          cartItems.push({ food, unit });
+        }
+      });
+    });
+    // create order with item description
+    if (cartItems) {
+      // create order
+      const currentOrder = await Order.create({
+        orderId,
+        items: cartItems,
+        totalAmount: netAmount,
+        orderDate: new Date(),
+        paidThrough: "COD",
+        paymentResponse: "",
+        orderStatus: "waiting",
+      });
+      // finally update orders to customer account
+      if (currentOrder) {
+        profile.orders.push(currentOrder);
+        const profileResponse = await profile.save();
+        return res.status(200).json(currentOrder);
+      }
+    }
+  }
+  return res.status(400).json({ message: "Error with create order" });
+};
+
+export const GetOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const customer = req.user;
+  if (customer) {
+    const profile = await Customer.findById(customer._id).populate("orders");
+    if (profile) {
+      return res.status(200).json(profile.orders);
+    }
+  }
+  return res.status(400).json({ message: "You don't Authorized" });
+};
+
+export const GetOrderById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const orderId = req.params.id;
+  if (orderId) {
+    const order = await Order.findById(orderId).populate("items.food");
+    res.status(200).json(order);
   }
 };
