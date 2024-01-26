@@ -1,9 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import {
+  AddToCart,
   CreateOrder,
   CustomerLogin,
   CustomerSignUp,
   CustomerVerify,
+  DeleteCart,
+  GetCart,
   GetCustomerProfile,
   GetOrderById,
   GetOrders,
@@ -35,6 +38,10 @@ router.get("/profile", GetCustomerProfile);
 router.patch("/profile", UpdateCustomerProfile);
 
 // Cart
+router.post("/cart", AddToCart);
+router.get("/cart", GetCart);
+router.delete("/cart", DeleteCart);
+
 // payment
 // Order
 router.post("/create-order", CreateOrder);
