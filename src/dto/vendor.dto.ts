@@ -9,19 +9,19 @@ export interface CreateVendorInput {
   password: string;
 }
 
-export interface EditVandorInput {
+export interface EditVendorInput {
   name: string;
   address: string;
   phone: string;
   foodTypes: [string];
 }
 
-export interface VandorLoginInput {
+export interface VendorLoginInput {
   email: string;
   password: string;
 }
 
-export interface VandorPayload {
+export interface VendorPayload {
   _id: string;
   email: string;
   name: string;

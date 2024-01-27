@@ -1,12 +1,15 @@
 import express, { Request, Response, NextFunction } from "express";
 import {
   AddFood,
+  GetCurrentOrders,
   GetFoods,
+  GetOrderDetails,
   GetVendorProfile,
-  UpdateVandorCoverImage,
+  ProcessOrder,
+  UpdateVendorCoverImage,
   UpdateVendorProfile,
   UpdateVendorService,
-  VandorLogin,
+  VendorLogin,
 } from "../controllers";
 import { Authenticate } from "../middlewares";
 import multer from "multer";
@@ -32,19 +35,24 @@ const images = multer({ storage: imageStorage }).array("images", 10);
 
 //* end multer config
 
-router.post("/login", VandorLogin);
+router.post("/login", VendorLogin);
 
 router.use(Authenticate);
 router.get("/profile", GetVendorProfile);
 router.patch("/profile", UpdateVendorProfile);
-router.patch("/coverimage", images, UpdateVandorCoverImage);
+router.patch("/coverimage", images, UpdateVendorCoverImage);
 router.patch("/service", UpdateVendorService);
 
 router.post("/food", images, AddFood);
 router.get("/foods", GetFoods);
 
+//* Orders
+router.get("/orders", GetCurrentOrders);
+router.put("/order/:id/process", ProcessOrder);
+router.get("/order/:id", GetOrderDetails);
+
 router.get("/", (req: Request, res: Response, next: NextFunction) => {
-  res.json({ message: "hello from vandor" });
+  res.json({ message: "hello from vendor" });
 });
 
-export { router as VandorRoute };
+export { router as VendorRoute };

@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
-import { Vandor } from "../models";
+import { Vendor } from "../models";
 import { FoodDoc } from "../models/Food";
 
 export const GetFoodAvailability = async (
@@ -9,7 +9,7 @@ export const GetFoodAvailability = async (
 ) => {
   const pincode = req.params.pincode;
 
-  const result = await Vandor.find({ pincode, serviceAvailable: false })
+  const result = await Vendor.find({ pincode, serviceAvailable: false })
     .sort([["rating", "descending"]])
     .populate("foods");
 
@@ -27,7 +27,7 @@ export const GetTopRestaurants = async (
 ) => {
   const pincode = req.params.pincode;
 
-  const result = await Vandor.find({ pincode, serviceAvailable: false })
+  const result = await Vendor.find({ pincode, serviceAvailable: false })
     .sort([["rating", "descending"]])
     .limit(10);
 
@@ -45,7 +45,7 @@ export const GetFoodsIn30Min = async (
 ) => {
   const pincode = req.params.pincode;
 
-  const result = await Vandor.find({
+  const result = await Vendor.find({
     pincode,
     serviceAvailable: false,
   }).populate("foods");
@@ -53,8 +53,8 @@ export const GetFoodsIn30Min = async (
   if (result.length > 0) {
     const foodResults: any = [];
 
-    result.map((vandor) => {
-      const foods = vandor.foods as [FoodDoc];
+    result.map((vendor) => {
+      const foods = vendor.foods as [FoodDoc];
       foodResults.push(...foods.filter((food) => food.readyTime <= 30));
     });
 
@@ -71,7 +71,7 @@ export const SearchFoods = async (
 ) => {
   const pincode = req.params.pincode;
 
-  const result = await Vandor.find({
+  const result = await Vendor.find({
     pincode,
     serviceAvailable: false,
   }).populate("foods");
@@ -93,7 +93,7 @@ export const GetRestaurantById = async (
   next: NextFunction
 ) => {
   const id = req.params.id;
-  const result = await Vandor.findById(id).populate("foods");
+  const result = await Vendor.findById(id).populate("foods");
 
   if (result) {
     return res.status(200).json(result);
