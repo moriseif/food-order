@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import { plainToClass } from "class-transformer";
 import {
+  CartItem,
   CreateCustomerInputs,
   CustomerLoginInputs,
   EditCustomerInputs,
@@ -18,6 +19,7 @@ import {
 import { Customer } from "../models/Customer";
 import { Food } from "../models/Food";
 import { Order } from "../models/Order";
+import { Offer, Transaction } from "../models";
 
 export const CustomerSignUp = async (
   req: Request,
@@ -240,7 +242,7 @@ export const AddToCart = async (
     const profile = await Customer.findById(customer._id).populate("cart.food");
     let cartItems = Array();
 
-    const { _id, unit } = <OrderInputs>req.body;
+    const { _id, unit } = <CartItem>req.body;
     const food = await Food.findById(_id);
 
     if (food) {
@@ -315,12 +317,13 @@ export const CreateOrder = async (
 ) => {
   // grab current login customer
   const customer = req.user;
+  const { amount, tnxId, items } = <OrderInputs>req.body; //  [{id:xx,unit:yy}]
+
   if (customer) {
     // create an order
     const orderId = `${Math.floor(Math.random() * 89999) + 1000}`;
     const profile = await Customer.findById(customer._id);
     // grab order items from the request [{id:xx,unit:yy}]
-    const cart = <[OrderInputs]>req.body; //  [{id:xx,unit:yy}]
     let cartItems = Array();
     let netAmount = 0.0;
 
@@ -328,11 +331,11 @@ export const CreateOrder = async (
     // calculate order amount
     const foods = await Food.find()
       .where("_id")
-      .in(cart.map((item) => item._id))
+      .in(items.map((item) => item._id))
       .exec();
 
     foods.map((food) => {
-      cart.map(({ _id, unit }) => {
+      items.map(({ _id, unit }) => {
         if (food._id === _id) {
           vendorId = food.vendorId;
           netAmount += food.price * unit;
@@ -395,4 +398,67 @@ export const GetOrderById = async (
     const order = await Order.findById(orderId).populate("items.food");
     res.status(200).json(order);
   }
+};
+
+export const VerifyOffer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const offerId = req.params.id;
+  const customer = req.user;
+
+  if (customer) {
+    const appliedOffer = await Offer.findById(offerId);
+    if (appliedOffer) {
+      if (appliedOffer.promoType === "USER") {
+        //* Only can apply once per user
+      } else {
+        if (appliedOffer.isActive) {
+          return res
+            .status(200)
+            .json({ message: "Offer is valid", offer: appliedOffer });
+        }
+      }
+    }
+  }
+  return res.status(400).json({ message: "Offer is not valid!" });
+};
+
+export const CreatePayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const customer = req.user;
+
+  const { amount, paymentMode, offerId } = req.body;
+  let payableAmount = Number(amount);
+
+  if (offerId) {
+    const appliedOffer = await Offer.findById(offerId);
+
+    if (appliedOffer) {
+      if (appliedOffer.isActive) {
+        payableAmount = payableAmount - appliedOffer.offerAmount;
+      }
+    }
+  }
+
+  //* Perform Payment Gateway Charge API call
+
+  //* Create record on transaction
+  const transaction = await Transaction.create({
+    customer: customer._id,
+    vendorId: "",
+    orderId: "",
+    orderValue: payableAmount,
+    offerUsed: offerId || "NA",
+    status: "OPEN", //? OPEN | FAILED | SUCCESS
+    paymentMode,
+    paymentResponse: "Payment is Cash on Delivery",
+  });
+
+  //* Return transaction ID
+  return res.status(200).json(transaction);
 };

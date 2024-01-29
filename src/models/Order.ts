@@ -18,15 +18,15 @@ export interface OrderDoc extends Document {
 
 const OrderSchema = new Schema(
   {
-    orderId: { type: String, required: true },
-    vendorId: { type: String, required: true },
+    orderId: { type: String, require: true },
+    vendorId: { type: String, require: true },
     items: [
       {
-        food: { type: Schema.Types.ObjectId, ref: "food", required: true },
-        unit: { type: Number, required: true },
+        food: { type: Schema.Types.ObjectId, ref: "food", require: true },
+        unit: { type: Number, require: true },
       },
     ],
-    totalAmount: { type: Number, required: true },
+    totalAmount: { type: Number, require: true },
     orderDate: { type: Date },
     paidThrough: { type: String },
     paymentResponse: { type: String },

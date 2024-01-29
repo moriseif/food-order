@@ -20,16 +20,16 @@ interface CustomerDoc extends Document {
 
 const CustomerSchema = new Schema(
   {
-    email: { type: String, required: true },
-    password: { type: String, required: true },
-    salt: { type: String, required: true },
+    email: { type: String, require: true },
+    password: { type: String, require: true },
+    salt: { type: String, require: true },
     firstName: { type: String },
     lastName: { type: String },
     address: { type: String },
-    phone: { type: String, required: true },
-    verified: { type: Boolean, required: true },
-    otp: { type: Number, required: true },
-    otp_expiry: { type: Date, required: true },
+    phone: { type: String, require: true },
+    verified: { type: Boolean, require: true },
+    otp: { type: Number, require: true },
+    otp_expiry: { type: Date, require: true },
     lat: { type: Number },
     lng: { type: Number },
     cart: [
