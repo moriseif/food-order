@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { CreateVendorInput } from "../dto";
-import { Vendor } from "../models";
+import { DeliveryUser, Transaction, Vendor } from "../models";
 import { GeneratePassword, GenerateSalt } from "../utility";
 
 export const FindVendor = async (id: string | undefined, email?: string) => {
@@ -53,6 +53,8 @@ export const CreateVendor = async (
     serviceAvailable: false,
     coverImages: [],
     foods: [],
+    lat: 0,
+    lng: 0,
   });
 
   return res.json(createVendor);
@@ -89,4 +91,67 @@ export const GetVendorById = async (
   } catch (error: any) {
     return res.json({ message: error });
   }
+};
+
+export const GetTransactions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const transaction = await Transaction.find();
+    if (transaction) {
+      return res.status(200).json(transaction);
+    }
+    return res.json({ message: "Transaction data not available!" });
+  } catch (error: any) {
+    return res.json({ message: error });
+  }
+};
+
+export const GetTransactionById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = req.params.id;
+    const transaction = await Transaction.findById(id);
+    if (transaction) {
+      return res.status(200).json(transaction);
+    }
+    return res.json({ message: "Transaction data not available!" });
+  } catch (error: any) {
+    return res.json({ message: error });
+  }
+};
+
+export const VerifyDeliveryUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { _id, status } = req.body;
+  if (_id) {
+    const profile = await DeliveryUser.findById(_id);
+    if (profile) {
+      profile.verified = status;
+      const result = await profile.save();
+      return res.status(200).json(result);
+    }
+  }
+  return res.status(400).json({ message: "Unable to verify delivery user!" });
+};
+
+export const GetDeliveryUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const deliveryUsers = await DeliveryUser.find();
+  if (deliveryUsers) {
+    return res.status(200).json(deliveryUsers);
+  }
+
+  return res.status(400).json({ message: "Unable to verify delivery user!" });
 };
